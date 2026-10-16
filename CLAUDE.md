@@ -58,6 +58,8 @@ assets/icon.svg
 4. 예제 객체 `{title, summary, components:[{type, label, pins}], makecode, micropython, howToTest, learn, warnings, source}`
 5. `App.applyExample` → `Stage.setup`(MB.kit.setup + 무대 + 조절 패널) → 편집기 → 블록 렌더 → 자동 실행
 
+예제 개수(`#gen-count`, 1~5)가 2 이상이면 `app.js generate()` 가 같은 요청을 차례로 n 번 부르며 `variant:{i,n}`·`avoid`(앞 제목)·`skip`(앞 레시피 id)을 넘긴다. 첫 예제만 바로 적용·실행하고 나머지는 카드의 「열기」로 적용. 오류가 나면 남은 개수는 건너뛴다.
+
 오프라인 제공자는 2~3 단계 대신 `KitTemplates.generate(prompt, selected)` 를 쓴다.
 
 ## 시뮬레이터 연결 규칙

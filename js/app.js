@@ -234,51 +234,85 @@
   }
   function providerLabel(p) { return (Agent.providers[p] && Agent.providers[p].label) || p; }
 
+  // 만든 예제 카드 (여러 개일 때는 「열기」 버튼으로 바꿔 볼 수 있음)
+  function resultCard(el, ex, i, n) {
+    el.className = 'msg';
+    el.innerHTML = `<h4>✅ ${n > 1 ? `${i + 1}/${n} · ` : ''}${esc(ex.title)}</h4><div>${esc(ex.summary)}</div>
+      <div class="small muted">구성품: ${ex.components.map(c => `${KIT.byId[c.type].name}(${Object.values(c.pins).join('/') || 'I2C'})`).join(', ')} · ${esc(providerLabel(ex.source))}</div>
+      ${(ex.warnings || []).map(w => `<div class="small warn">⚠ ${esc(w)}</div>`).join('')}
+      ${n > 1 ? '<div class="row" style="margin-top:6px"><button class="btn sm" data-open>▶ 이 예제 열기</button></div>' : ''}`;
+    const b = el.querySelector('[data-open]');
+    if (b) b.onclick = () => { applyExample(ex, { run: true }); markOpen(el); };
+  }
+  function markOpen(el) {
+    log.querySelectorAll('.msg.open').forEach(m => m.classList.remove('open'));
+    el.classList.add('open');
+  }
+
   async function generate() {
     if (state.busy) return;
     const prompt = $('prompt').value.trim();
     const selected = [...state.selected];
     if (!prompt && !selected.length) { toast('만들고 싶은 것을 적거나 구성품을 골라 주세요'); $('prompt').focus(); return; }
     const modify = $('chk-modify').checked && state.ex;
+    const n = Math.max(1, Math.min(5, parseInt($('gen-count').value, 10) || 1));
+    $('gen-count').value = n; store.set('mgka.count', n);
     const s = Agent.Settings.load();
-    addMsg('user', esc(prompt || '(선택한 구성품으로 만들기)') + (selected.length ? `<br><span class="small muted">구성품: ${selected.map(t => KIT.byId[t].name).join(', ')}</span>` : '') + (modify ? '<br><span class="small muted">↳ 현재 예제 고치기</span>' : ''));
-    const work = addMsg('', `<span class="spin"></span>${esc(providerLabel(s.provider))} 로 예제를 만드는 중… <div class="stream"></div>`);
-    const stream = work.querySelector('.stream');
+    addMsg('user', esc(prompt || '(선택한 구성품으로 만들기)') + (n > 1 ? ` <span class="small muted">· ${n}개</span>` : '') +
+      (selected.length ? `<br><span class="small muted">구성품: ${selected.map(t => KIT.byId[t].name).join(', ')}</span>` : '') + (modify ? '<br><span class="small muted">↳ 현재 예제 고치기</span>' : ''));
     const ctrl = new AbortController();
     state.busy = ctrl;
     $('btn-generate').disabled = true; $('btn-cancel').hidden = false;
-    let chars = 0;
+    const made = [];
+    const current = modify ? state.ex : null;
     try {
-      const ex = await Agent.generate({ prompt, selected, lang: state.lang, current: modify ? state.ex : null }, {
-        signal: ctrl.signal,
-        onText: t => { chars += t.length; stream.textContent = (stream.textContent + t).slice(-400); },
-      });
-      ex.prompt = prompt;
-      ex.created = Date.now();
-      work.innerHTML = `<h4>✅ ${esc(ex.title)}</h4><div>${esc(ex.summary)}</div>
-        <div class="small muted">구성품: ${ex.components.map(c => `${KIT.byId[c.type].name}(${Object.values(c.pins).join('/') || 'I2C'})`).join(', ')} · ${esc(providerLabel(ex.source))}</div>
-        ${(ex.warnings || []).map(w => `<div class="small warn">⚠ ${esc(w)}</div>`).join('')}`;
-      addHistory(ex);
-      applyExample(ex, { run: true });
-      $('chk-modify').checked = false;
-    } catch (e) {
-      work.className = 'msg err';
-      work.innerHTML = e.name === 'AbortError' ? '취소했습니다.' : `⚠ ${esc(e.message || e)}` +
-        (s.provider !== 'offline' ? '<br><button class="btn sm" data-offline>오프라인 내장 예제로 만들기</button> <button class="btn sm" data-settings>설정 열기</button>' : '');
-      const off = work.querySelector('[data-offline]');
-      if (off) off.onclick = async () => {
-        const ex = await Agent.generate({ prompt, selected, lang: state.lang, provider: 'offline' });
-        ex.prompt = prompt; ex.created = Date.now();
-        addMsg('', `<h4>✅ ${esc(ex.title)}</h4><div>${esc(ex.summary)}</div><div class="small muted">오프라인 내장 예제</div>`);
-        addHistory(ex); applyExample(ex, { run: true });
-      };
-      const st = work.querySelector('[data-settings]');
-      if (st) st.onclick = openSettings;
+      for (let i = 0; i < n; i++) {
+        const work = addMsg('', `<span class="spin"></span>${n > 1 ? `<b>${i + 1}/${n}</b> ` : ''}${esc(providerLabel(s.provider))} 로 예제를 만드는 중… <div class="stream"></div>`);
+        const stream = work.querySelector('.stream');
+        try {
+          const ex = await Agent.generate({
+            prompt, selected, lang: state.lang, current,
+            variant: { i, n }, avoid: made.map(e => e.title), skip: made.map(e => e.recipe || 'compose'),
+          }, {
+            signal: ctrl.signal,
+            onText: t => { stream.textContent = (stream.textContent + t).slice(-400); },
+          });
+          ex.prompt = prompt;
+          ex.created = Date.now();
+          made.push(ex);
+          resultCard(work, ex, i, n);
+          addHistory(ex);
+          // 첫 예제는 바로 열어 실행, 나머지는 카드에서 골라 열기
+          if (i === 0) { applyExample(ex, { run: true }); if (n > 1) markOpen(work); }
+        } catch (e) {
+          work.className = 'msg err';
+          if (e.name === 'AbortError') { work.innerHTML = '취소했습니다.'; break; }
+          work.innerHTML = `⚠ ${n > 1 ? `${i + 1}/${n}: ` : ''}${esc(e.message || e)}` +
+            (s.provider !== 'offline' ? '<br><button class="btn sm" data-offline>오프라인 내장 예제로 만들기</button> <button class="btn sm" data-settings>설정 열기</button>' : '');
+          const off = work.querySelector('[data-offline]');
+          if (off) off.onclick = async () => {
+            const exs = KitTemplates.generateMany(prompt, selected, n - made.length);
+            exs.forEach((ex, k) => {
+              ex.prompt = prompt; ex.created = Date.now(); ex.source = 'offline';
+              ex.warnings = AgentPrompt.check(ex, []);
+              const el = addMsg('', '');
+              resultCard(el, ex, k, exs.length);
+              addHistory(ex);
+              if (k === 0) { applyExample(ex, { run: true }); if (exs.length > 1) markOpen(el); }
+            });
+          };
+          const st = work.querySelector('[data-settings]');
+          if (st) st.onclick = openSettings;
+          break; // 같은 오류가 반복될 가능성이 높으므로 남은 예제는 만들지 않음
+        }
+      }
+      if (made.length) $('chk-modify').checked = false;
     } finally {
       state.busy = null;
       $('btn-generate').disabled = false; $('btn-cancel').hidden = true;
     }
   }
+  $('gen-count').value = store.get('mgka.count', 1);
   $('btn-generate').onclick = generate;
   $('btn-cancel').onclick = () => state.busy && state.busy.abort();
   $('prompt').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) generate(); });

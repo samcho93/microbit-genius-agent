@@ -168,7 +168,7 @@
     hooks = hooks || {};
     const provider = req.provider || s.provider;
     if (provider === 'offline') {
-      const ex = KitTemplates.generate(req.prompt, req.selected);
+      const ex = KitTemplates.generate(req.prompt, req.selected, req.skip);
       ex.warnings = AgentPrompt.check(ex, []);
       ex.source = 'offline';
       return ex;

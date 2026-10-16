@@ -949,7 +949,7 @@ while True:
     py += "    lit = int(level * 5)\n    display.show(Image(':'.join(['99999' if 4 - y < lit else '00000' for y in range(5)])))\n    sleep(200)\n";
     const names = list.map(c => KIT.byId[c.type].name).join(', ');
     return {
-      title: (prompt ? prompt.slice(0, 18) + ' ' : '') + '센서 → 출력 연결 예제',
+      title: '구성품 조합: ' + list.map(c => KIT.byId[c.type].name.replace(/ (센서|모터|디스플레이)$/, '')).slice(0, 3).join('·') + (list.length > 3 ? ' 외' : ''),
       summary: `${names} 을(를) 함께 사용합니다. ${main ? `${KIT.byId[inputs[0].type].name} 값을 0~1 단계로 바꿔` : 'A/B 버튼으로 단계를 조절해'} 출력 장치(LED·모터·서보·LED 링)를 제어하고 센서 값을 ${k.has('oled') ? 'OLED 와 ' : ''}시리얼 창에 보여 줍니다.`,
       components: list,
       makecode: mc, micropython: py,
@@ -969,36 +969,54 @@ while True:
     };
   }
 
-  // 프롬프트 + 선택한 구성품으로 가장 알맞은 예제 고르기
-  function generate(prompt, selected) {
-    prompt = (prompt || '').trim();
-    selected = selected || [];
-    const p = prompt.toLowerCase();
-    let best = null, bestScore = 0;
-    for (const r of R) {
+  // 레시피 점수: 프롬프트 낱말 + 선택한 구성품과 겹치는 정도
+  function rank(prompt, selected) {
+    const p = (prompt || '').trim().toLowerCase();
+    return R.map(r => {
       let s = 0;
       for (const kw of r.keywords) if (p.includes(kw)) s += 3;
-      if (p.includes(r.title.replace(/\s/g, '').slice(0, 4))) s += 2;
+      if (p && p.includes(r.title.replace(/\s/g, '').slice(0, 4))) s += 2;
       if (selected.length) {
         const inSel = r.parts.filter(t => selected.includes(t)).length;
         const extra = r.parts.length - inSel;
         s += inSel * 2 - extra * 1.5;
         if (inSel === r.parts.length && inSel === selected.length) s += 4;
       }
-      // 프롬프트 속 부품 키워드
       for (const t of r.parts) for (const kw of KIT.byId[t].keywords) if (p.includes(kw)) s += 0.5;
-      if (s > bestScore) { bestScore = s; best = r; }
-    }
-    const threshold = selected.length ? 4 : 2.5;
-    if (best && bestScore >= threshold) return fromRecipe(best);
+      return { r, s };
+    }).sort((a, b) => b.s - a.s);
+  }
+
+  // 프롬프트 + 선택한 구성품으로 가장 알맞은 예제 고르기 (skip: 이미 고른 레시피 id)
+  function generate(prompt, selected, skip) {
+    prompt = (prompt || '').trim();
+    selected = selected || [];
+    skip = skip || [];
+    const p = prompt.toLowerCase();
+    const ranked = rank(prompt, selected).filter(x => !skip.includes(x.r.id));
+    // 두 번째부터는 조금이라도 관련 있는 레시피를 조합 생성기보다 먼저 고름
+    const threshold = skip.length ? 0.5 : selected.length ? 4 : 2.5;
+    if (ranked.length && ranked[0].s >= threshold) return fromRecipe(ranked[0].r);
     // 레시피가 맞지 않으면 선택(또는 프롬프트에서 찾은) 구성품으로 조합
     let types = selected.slice();
     if (!types.length) {
       for (const part of KIT.PARTS) if (part.group !== 'accessory' && part.keywords.some(kw => p.includes(kw))) types.push(part.id);
     }
-    if (!types.length) return fromRecipe(R[0]);
-    return compose(types, prompt);
+    if (types.length && !skip.includes('compose')) return compose(types, prompt);
+    // 조합도 이미 썼으면 점수 순서대로 다음 레시피
+    return ranked.length ? fromRecipe(ranked[0].r) : fromRecipe(R[0]);
   }
 
-  window.KitTemplates = { RECIPES: R, generate, fromRecipe, compose };
+  // 서로 다른 예제 n 개
+  function generateMany(prompt, selected, n) {
+    const out = [], used = [];
+    for (let i = 0; i < n && used.length < R.length + 1; i++) {
+      const ex = generate(prompt, selected, used);
+      used.push(ex.recipe || 'compose');
+      out.push(ex);
+    }
+    return out;
+  }
+
+  window.KitTemplates = { RECIPES: R, generate, generateMany, fromRecipe, compose, rank };
 })();

@@ -69,6 +69,11 @@ ${KIT.promptCatalog()}
     }
     s += '# 요청\n' + (req.prompt || '(주제 없음 — 선택한 구성품을 모두 활용하는 재미있는 생활 속 예제를 만들어 줘)') + '\n';
     if (parts.length) s += '\n# 반드시 사용할 구성품\n' + parts.join(', ') + '\n';
+    if (req.variant && req.variant.n > 1) {
+      s += `\n# 여러 예제 중 ${req.variant.i + 1}/${req.variant.n} 번째\n같은 요청으로 예제 ${req.variant.n} 개를 만드는 중이다.`;
+      if (req.avoid && req.avoid.length) s += ` 이미 만든 예제: ${req.avoid.map(t => '"' + t + '"').join(', ')} — 이것들과 주제·동작·구성품 조합이 겹치지 않는 다른 아이디어로 만든다.`;
+      s += '\n';
+    }
     s += `\n# 우선 언어\n${req.lang === 'python' ? 'MicroPython' : 'MakeCode'} 코드를 특히 정성껏 (두 언어 모두 출력)\n`;
     return s;
   }
