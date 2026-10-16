@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>지니어스 키트 에이전트</title>
+<meta name="description" content="마이크로비트 지니어스 키트 예제 생성 에이전트 — 프롬프트나 구성품 선택으로 MakeCode·MicroPython 예제를 만들고 바로 시뮬레이션">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+<link rel="stylesheet" href="css/app.css?v=1">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="#workspace" aria-label="작업공간">
+    <svg viewBox="0 0 40 26" aria-hidden="true"><rect x="1" y="1" width="38" height="24" rx="12" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="13" cy="13" r="3.4" fill="currentColor"/><circle cx="27" cy="13" r="3.4" fill="currentColor"/></svg>
+    <span><b>지니어스 키트</b> 에이전트</span>
+  </a>
+  <nav class="nav" aria-label="메뉴">
+    <a href="#workspace" data-view="workspace">작업공간</a>
+    <a href="#guide" data-view="guide">사용법</a>
+    <a href="#tutorial" data-view="tutorial">튜토리얼</a>
+  </nav>
+  <div class="top-right">
+    <button class="chip provider-chip" id="provider-chip" title="에이전트 설정"><i class="dot"></i><span id="provider-name">…</span></button>
+    <button class="icon-btn" id="btn-theme" title="밝게/어둡게" aria-label="테마 바꾸기">◐</button>
+    <button class="icon-btn" id="btn-settings" title="설정" aria-label="설정">⚙</button>
+  </div>
+</header>
+
+<!-- ============ 작업공간 ============ -->
+<main id="view-workspace" class="view workspace">
+  <!-- 1. 에이전트 -->
+  <section class="pane agent-pane" aria-label="에이전트">
+    <div class="pane-head"><h2>🤖 에이전트</h2><span class="muted small" id="agent-provider-note"></span></div>
+    <div class="pane-body">
+      <div class="block">
+        <div class="block-title">구성품 선택 <span class="muted small">(여러 개 선택)</span>
+          <button class="link-btn" id="btn-clear-parts">선택 해제</button>
+        </div>
+        <div class="parts-grid" id="parts-grid"></div>
+      </div>
+      <div class="block">
+        <label class="block-title" for="prompt">무엇을 만들까요?</label>
+        <textarea id="prompt" rows="3" placeholder="예) 날씨에 관한 예제 · 다가가면 열리는 쓰레기통 · 키패드로 연주하는 피아노"></textarea>
+        <div class="suggest" id="suggest"></div>
+        <div class="gen-row">
+          <label class="check"><input type="checkbox" id="chk-modify"> 현재 예제 고치기</label>
+          <button class="btn primary" id="btn-generate">✨ 예제 만들기</button>
+          <button class="btn" id="btn-cancel" hidden>취소</button>
+        </div>
+      </div>
+      <div class="log" id="agent-log" aria-live="polite"></div>
+      <details class="block history">
+        <summary>최근 만든 예제 <span class="muted small" id="history-count"></span></summary>
+        <ul id="history"></ul>
+      </details>
+      <details class="block history">
+        <summary>내장 예제 갤러리 <span class="muted small">(키 없이 바로)</span></summary>
+        <ul id="gallery"></ul>
+      </details>
+    </div>
+  </section>
+
+  <!-- 2. 코드 -->
+  <section class="pane code-pane" aria-label="코드">
+    <div class="pane-head">
+      <h2 id="ex-title">예제</h2>
+      <div class="seg" role="tablist" aria-label="언어">
+        <button role="tab" data-lang="makecode" class="on">MakeCode</button>
+        <button role="tab" data-lang="python">MicroPython</button>
+      </div>
+    </div>
+    <div class="code-tabs" id="code-tabs">
+      <button data-tab="blocks" class="on">블록</button>
+      <button data-tab="js">JavaScript</button>
+      <span class="spacer"></span>
+      <button class="tool" id="btn-copy" title="코드 복사">복사</button>
+      <button class="tool" id="btn-download" title="파일로 저장">저장</button>
+      <button class="tool" id="btn-open-editor" title="공식 편집기에서 열기">편집기에서 열기 ↗</button>
+    </div>
+    <div class="code-body">
+      <div class="blocks-view" id="blocks-view"><div class="muted center pad">블록을 불러오는 중…</div></div>
+      <div class="editor-host" id="editor-mc" hidden></div>
+      <div class="editor-host" id="editor-py" hidden></div>
+    </div>
+    <div class="ex-info" id="ex-info"></div>
+  </section>
+
+  <!-- 3. 시뮬레이션 -->
+  <section class="pane sim-pane" aria-label="시뮬레이션">
+    <div class="pane-head">
+      <h2>🔌 시뮬레이션</h2>
+      <div class="run-ctl">
+        <span class="status" id="run-status">대기</span>
+        <button class="btn run" id="btn-run">▶ 실행</button>
+        <button class="btn" id="btn-stop">■ 정지</button>
+      </div>
+    </div>
+    <div class="pane-body sim-body">
+      <div class="stage" id="stage"></div>
+      <div class="block">
+        <div class="block-title">센서 조절 · 출력 상태</div>
+        <div class="controls" id="kit-controls"></div>
+      </div>
+      <details class="block" id="board-ctl">
+        <summary>micro:bit 내장 센서 (온도 · 빛 · 기울기 · 흔들기)</summary>
+        <div class="board-ctl">
+          <label>온도 <input type="range" id="mb-temp" min="-10" max="50" value="22"><output id="mb-temp-v">22°C</output></label>
+          <label>빛 <input type="range" id="mb-light" min="0" max="255" value="120"><output id="mb-light-v">120</output></label>
+          <label>좌우 기울기 <input type="range" id="mb-roll" min="-90" max="90" value="0"><output id="mb-roll-v">0°</output></label>
+          <label>앞뒤 기울기 <input type="range" id="mb-pitch" min="-90" max="90" value="0"><output id="mb-pitch-v">0°</output></label>
+          <div class="row"><button class="btn sm" id="mb-shake">흔들기</button><button class="btn sm" id="mb-ab">A+B 누르기</button></div>
+        </div>
+      </details>
+      <div class="block serial">
+        <div class="block-title">시리얼 출력 <button class="link-btn" id="btn-serial-clear">지우기</button></div>
+        <pre id="serial" aria-live="off"></pre>
+        <form id="serial-form" class="serial-in"><input id="serial-input" placeholder="시리얼로 보낼 글 (Enter)" autocomplete="off"></form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ============ 사용법 ============ -->
+<main id="view-guide" class="view doc" hidden>
+  <article class="doc-body" id="guide-body"></article>
+</main>
+
+<!-- ============ 튜토리얼 ============ -->
+<main id="view-tutorial" class="view doc" hidden>
+  <article class="doc-body" id="tutorial-body"></article>
+</main>
+
+<!-- ============ 설정 ============ -->
+<dialog id="settings" class="modal">
+  <form method="dialog" class="modal-body" id="settings-form">
+    <h2>⚙ 에이전트 설정</h2>
+    <p class="muted small">입력한 API 키는 <b>이 브라우저(localStorage)에만</b> 저장되고, 고른 제공자의 서버로만 직접 전송됩니다.</p>
+    <fieldset class="providers">
+      <legend>사용할 LLM</legend>
+      <label><input type="radio" name="provider" value="claude-cli"> <b>Claude CLI</b> <span class="muted">— 내 컴퓨터의 Claude Code 로그인 사용 (기본)</span></label>
+      <label><input type="radio" name="provider" value="anthropic"> <b>Anthropic API 키</b> <span class="muted">— Claude API</span></label>
+      <label><input type="radio" name="provider" value="openai"> <b>OpenAI API 키</b></label>
+      <label><input type="radio" name="provider" value="gemini"> <b>Google Gemini API 키</b></label>
+      <label><input type="radio" name="provider" value="offline"> <b>오프라인</b> <span class="muted">— 키 없이 내장 예제·조합 생성기</span></label>
+    </fieldset>
+
+    <div class="pv" data-pv="claude-cli">
+      <p class="small">브라우저는 CLI 를 직접 실행할 수 없어서, 내 컴퓨터에서 작은 <b>브리지</b>를 켜 두면 웹앱이 그 브리지를 통해 <code>claude</code> 를 실행합니다. 터미널에서:</p>
+      <pre class="cmd"><code>npx -y github:samcho93/microbit-genius-agent</code><button type="button" class="copy" data-copy="npx -y github:samcho93/microbit-genius-agent">복사</button></pre>
+      <label>브리지 주소 <input name="bridgeUrl" placeholder="http://127.0.0.1:8787"></label>
+      <label>모델 <select name="cliModel"><option value="">CLI 기본값</option><option value="opus">opus</option><option value="sonnet">sonnet</option><option value="haiku">haiku</option></select></label>
+      <div class="row"><button type="button" class="btn sm" id="btn-test-bridge">연결 확인</button><span class="small" id="bridge-state"></span></div>
+    </div>
+    <div class="pv" data-pv="anthropic">
+      <label>API 키 <input name="anthropicKey" type="password" placeholder="sk-ant-..." autocomplete="off"></label>
+      <label>모델 <select name="anthropicModel"><option value="claude-opus-5-5">Claude Opus 5.5 (기본)</option><option value="claude-sonnet-5-5">Claude Sonnet 5.5</option><option value="claude-haiku-5-5">Claude Haiku 5.5</option></select></label>
+      <label>생각 깊이(effort) <select name="effort"><option value="low">low (빠름)</option><option value="medium">medium (기본)</option><option value="high">high</option></select></label>
+      <p class="small muted">키 발급: <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a></p>
+    </div>
+    <div class="pv" data-pv="openai">
+      <label>API 키 <input name="openaiKey" type="password" placeholder="sk-..." autocomplete="off"></label>
+      <label>모델 이름 <input name="openaiModel" placeholder="gpt-5"></label>
+    </div>
+    <div class="pv" data-pv="gemini">
+      <label>API 키 <input name="geminiKey" type="password" placeholder="AIza..." autocomplete="off"></label>
+      <label>모델 이름 <input name="geminiModel" placeholder="gemini-2.5-flash"></label>
+    </div>
+    <div class="pv" data-pv="offline">
+      <p class="small">LLM 없이 내장 레시피 18가지와 구성품 조합 생성기로 예제를 만듭니다. 프롬프트의 낱말(예: 날씨, 화분, 주차)과 선택한 구성품으로 가장 알맞은 예제를 고릅니다.</p>
+    </div>
+
+    <div class="modal-foot">
+      <button type="button" class="btn danger sm" id="btn-clear-keys">저장된 키 모두 지우기</button>
+      <span class="spacer"></span>
+      <button value="cancel" class="btn">닫기</button>
+      <button value="save" class="btn primary" id="btn-save-settings">저장</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- MakeCode 편집기 (가져오기) -->
+<dialog id="mc-dialog" class="modal wide">
+  <div class="modal-body">
+    <div class="row"><h2>MakeCode 편집기</h2><span class="spacer"></span><a class="btn sm" id="mc-newtab" href="https://makecode.microbit.org/" target="_blank" rel="noopener">새 탭에서 열기 ↗</a><button class="btn sm" id="mc-close">닫기</button></div>
+    <p class="small muted" id="mc-note">코드를 불러오는 중… 편집기에서 블록을 확인하고 「다운로드」로 .hex 파일을 받아 micro:bit 에 복사하세요.</p>
+    <iframe id="mc-frame" title="MakeCode 편집기" allow="usb; bluetooth"></iframe>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" hidden></div>
+<iframe id="mc-renderer" title="블록 렌더러" aria-hidden="true" tabindex="-1"></iframe>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+<script src="lib/skulpt.min.js"></script>
+<script src="lib/skulpt-stdlib.js"></script>
+<script src="js/sim/font.js?v=1"></script>
+<script src="js/sim/core.js?v=1"></script>
+<script src="js/sim/board.js?v=1"></script>
+<script src="js/sim/sensors.js?v=1"></script>
+<script src="js/sim/audio.js?v=1"></script>
+<script src="js/sim/radio.js?v=1"></script>
+<script src="js/sim/datalog.js?v=1"></script>
+<script src="js/sim/fs.js?v=1"></script>
+<script src="js/sim/runtime.js?v=1"></script>
+<script src="js/kit/catalog.js?v=1"></script>
+<script src="js/kit/draw.js?v=1"></script>
+<script src="js/kit/devices.js?v=1"></script>
+<script src="js/kit/stage.js?v=1"></script>
+<script src="js/sim/makecode.js?v=1"></script>
+<script src="js/agent/templates.js?v=1"></script>
+<script src="js/agent/prompt.js?v=1"></script>
+<script src="js/agent/providers.js?v=1"></script>
+<script src="js/ui/blocks.js?v=1"></script>
+<script src="js/ui/docs.js?v=1"></script>
+<script src="js/app.js?v=1"></script>
+</body>
+</html>
