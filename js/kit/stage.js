@@ -312,11 +312,17 @@
   St.renderAll = () => St.nodes.forEach(St.render);
   const renderType = (...types) => St.nodes.forEach(n => { if (types.includes(n.d.type)) St.render(n); });
 
+  // 다음 화면 그리기 때 한 번만 다시 그림. 종류(key)별로 모아 두어 서로 덮어쓰지 않게
   let raf = 0;
-  const schedule = fn => { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; fn(); }); };
-  MB.on('pinout', () => schedule(() => renderType('led', 'motor', 'servo')));
+  const pending = new Map();
+  const schedule = (fn, key) => {
+    pending.set(key || fn, fn);
+    if (raf) return;
+    raf = requestAnimationFrame(() => { raf = 0; const fns = [...pending.values()]; pending.clear(); fns.forEach(f => f()); });
+  };
+  MB.on('pinout', () => schedule(() => renderType('led', 'motor', 'servo'), 'pins'));
   MB.on('ring', () => renderType('ring'));
-  MB.on('oled', () => schedule(() => renderType('oled')));
+  MB.on('oled', () => schedule(() => renderType('oled'), 'oled'));
   MB.on('kitinput', d => St.nodes.forEach(n => { if (n.d === d) St.render(n); }));
   MB.on('sonarping', d => {
     const n = St.nodes.find(x => x.d === d);
