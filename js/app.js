@@ -306,7 +306,12 @@
           break; // 같은 오류가 반복될 가능성이 높으므로 남은 예제는 만들지 않음
         }
       }
-      if (made.length) $('chk-modify').checked = false;
+      if (made.length) {
+        $('chk-modify').checked = false;
+        const el = addMsg('', `📑 만든 예제 ${made.length}개로 수업용 강의 교안(회로 · 블록 · 파이썬 · 설명 · 확인 문제)을 PDF 로 만들 수 있어요.<div class="row" style="margin-top:6px"><button class="btn sm primary" data-lesson>📑 강의 교안 PDF 만들기${made.length > 1 ? ` (${made.length}개 예제)` : ''}</button></div>`);
+        const batch = made.slice();
+        el.querySelector('[data-lesson]').onclick = () => makeLesson(batch);
+      }
     } finally {
       state.busy = null;
       $('btn-generate').disabled = false; $('btn-cancel').hidden = true;
@@ -316,6 +321,32 @@
   $('btn-generate').onclick = generate;
   $('btn-cancel').onclick = () => state.busy && state.busy.abort();
   $('prompt').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) generate(); });
+
+  // 강의 교안 PDF
+  let lessonBusy = false;
+  async function makeLesson(examples) {
+    if (lessonBusy) { toast('교안을 만드는 중입니다'); return; }
+    if (state.busy) { toast('예제를 다 만든 뒤에 눌러 주세요'); return; }
+    lessonBusy = true;
+    if (location.hash !== '#workspace') location.hash = 'workspace';
+    const msg = addMsg('', '<span class="spin"></span><span class="st">강의 교안 준비 중…</span>');
+    const st = msg.querySelector('.st');
+    try {
+      const n = await Lesson.makeLessonPdf(examples, { onStatus: t => { st.textContent = t; } });
+      msg.innerHTML = `✅ 강의 교안 PDF ${n}쪽을 저장했습니다 (${examples.map(e => esc(e.title)).join(', ')})`;
+      examples.forEach(updateHistoryLesson);
+    } catch (e) {
+      msg.className = 'msg err';
+      msg.textContent = '⚠ 교안을 만들지 못했습니다: ' + (e.message || e);
+    } finally { lessonBusy = false; }
+  }
+  // 만든 교안 글을 기록에도 남겨 다음에는 바로 PDF
+  function updateHistoryLesson(ex) {
+    const h = store.get('mgka.history', []);
+    const k = h.findIndex(x => x.created === ex.created && x.title === ex.title);
+    if (k >= 0 && ex.lesson) { h[k].lesson = ex.lesson; store.set('mgka.history', h); }
+  }
+  $('btn-lesson').onclick = () => state.ex && makeLesson([state.ex]);
 
   // 기록
   function addHistory(ex) {

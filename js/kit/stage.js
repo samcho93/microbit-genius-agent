@@ -112,7 +112,8 @@
     ordered.forEach((d, i) => {
       const s = slots[i] || { x: 600, y: 900 };
       const art = KitDraw.draw(d.type);
-      const sc = Math.min(1.5, 225 / art.w, 225 / art.h);
+      // OLED 는 글씨가 보이도록 크게 (나머지는 칸 크기에 맞춤)
+      const sc = d.type === 'oled' ? 2.1 : Math.min(1.5, 225 / art.w, 225 / art.h);
       const ox = s.x - art.w * sc / 2, oy = s.y - art.h * sc / 2 - 8;
       const g = el('g', { class: 'k-part k-' + d.type, transform: `translate(${ox.toFixed(1)} ${oy.toFixed(1)}) scale(${sc.toFixed(3)})`, 'data-type': d.type }, partsG);
       g.innerHTML = art.svg;
@@ -150,6 +151,7 @@
     });
     St.renderAll();
     St.content = content;
+    bindZoom(host, svg);
     St.fit();
     return svg;
   };
@@ -237,14 +239,75 @@
   };
 
   // 쓰인 부분만 보이도록 viewBox 맞춤 (화면이 숨겨져 있으면 전체)
+  // 쓰인 부분만 보이도록 viewBox 맞춤 (화면이 숨겨져 있으면 전체). 확대·이동도 viewBox 로 처리
   St.fit = function () {
     if (!St.svg || !St.content) return;
     let b;
     try { b = St.content.getBBox(); } catch (_) { b = null; }
-    if (!b || !b.width) { St.svg.setAttribute('viewBox', `0 0 ${VW} ${VH}`); return; }
+    if (!b || !b.width) { St.fitVB = null; St.svg.setAttribute('viewBox', `0 0 ${VW} ${VH}`); return; }
     const pad = 24;
-    St.svg.setAttribute('viewBox', `${Math.floor(b.x - pad)} ${Math.floor(b.y - pad)} ${Math.ceil(b.width + pad * 2)} ${Math.ceil(b.height + pad * 2)}`);
+    St.fitVB = { x: Math.floor(b.x - pad), y: Math.floor(b.y - pad), w: Math.ceil(b.width + pad * 2), h: Math.ceil(b.height + pad * 2) };
+    setVB(Object.assign({}, St.fitVB));
   };
+  function setVB(v) {
+    St.vb = v;
+    St.svg.setAttribute('viewBox', `${v.x.toFixed(1)} ${v.y.toFixed(1)} ${v.w.toFixed(1)} ${v.h.toFixed(1)}`);
+    if (St.zoomLabel && St.fitVB) St.zoomLabel.textContent = Math.round(St.fitVB.w / v.w * 100) + '%';
+  }
+  // 화면 좌표 → viewBox 좌표
+  function svgPoint(cx, cy) {
+    const r = St.svg.getBoundingClientRect(), v = St.vb;
+    const s = Math.max(v.w / r.width, v.h / r.height);           // preserveAspectRatio meet
+    const ox = (r.width - v.w / s) / 2, oy = (r.height - v.h / s) / 2;
+    return { x: v.x + (cx - r.left - ox) * s, y: v.y + (cy - r.top - oy) * s, s };
+  }
+  St.zoom = function (factor, cx, cy) {
+    if (!St.vb || !St.fitVB) return;
+    const v = St.vb;
+    const nw = Math.max(St.fitVB.w / 8, Math.min(St.fitVB.w * 1.5, v.w * factor));
+    const f = nw / v.w;
+    const r = St.svg.getBoundingClientRect();
+    const p = cx === undefined ? { x: v.x + v.w / 2, y: v.y + v.h / 2 } : svgPoint(cx, cy);
+    setVB({ x: p.x - (p.x - v.x) * f, y: p.y - (p.y - v.y) * f, w: v.w * f, h: v.h * f });
+  };
+  St.resetZoom = () => { if (St.fitVB) setVB(Object.assign({}, St.fitVB)); };
+
+  function bindZoom(host, svg) {
+    // 마우스 휠: 커서 위치를 중심으로 확대·축소
+    svg.addEventListener('wheel', e => {
+      e.preventDefault();
+      const dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+      St.zoom(Math.exp(dy * 0.0015), e.clientX, e.clientY);
+    }, { passive: false });
+    // 빈 곳을 끌면 이동 (구성품·버튼 누르기는 그대로)
+    let drag = null;
+    svg.addEventListener('pointerdown', e => {
+      if (e.button !== 0 || e.target.closest('.mb-touch, .k-part')) return;
+      drag = { x: e.clientX, y: e.clientY, vb: Object.assign({}, St.vb), id: e.pointerId, moved: false };
+    });
+    svg.addEventListener('pointermove', e => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      if (!drag.moved && Math.hypot(dx, dy) < 4) return;
+      if (!drag.moved) { drag.moved = true; try { svg.setPointerCapture(e.pointerId); } catch (_) {} svg.classList.add('panning'); }
+      const s = svgPoint(0, 0).s;
+      setVB({ x: drag.vb.x - dx * s, y: drag.vb.y - dy * s, w: drag.vb.w, h: drag.vb.h });
+    });
+    const end = () => { drag = null; svg.classList.remove('panning'); };
+    svg.addEventListener('pointerup', end);
+    svg.addEventListener('pointercancel', end);
+    svg.addEventListener('dblclick', e => { if (!e.target.closest('.mb-touch, .k-part')) St.resetZoom(); });
+    // 확대 버튼 (터치 화면용)
+    const bar = document.createElement('div');
+    bar.className = 'stage-zoom';
+    bar.innerHTML = '<button type="button" data-z="in" title="확대 (마우스 휠)">＋</button><span class="zl">100%</span><button type="button" data-z="out" title="축소">－</button><button type="button" data-z="fit" title="전체 보기 (빈 곳 더블클릭)">⤢</button>';
+    bar.onclick = e => {
+      const z = e.target.dataset && e.target.dataset.z;
+      if (z === 'in') St.zoom(1 / 1.3); else if (z === 'out') St.zoom(1.3); else if (z === 'fit') St.resetZoom();
+    };
+    host.appendChild(bar);
+    St.zoomLabel = bar.querySelector('.zl');
+  }
 
   St.renderAll = () => St.nodes.forEach(St.render);
   const renderType = (...types) => St.nodes.forEach(n => { if (types.includes(n.d.type)) St.render(n); });
@@ -310,12 +373,31 @@
           b.onpointerup = b.onpointerleave = () => d.value === k && MB.kit.set(d, null);
         }
       } else {
-        mk('span', 'muted', ctl, d.type === 'oled' ? '코드가 그린 화면이 무대에 표시됩니다' : '코드가 제어하는 출력 장치');
+        if (d.type === 'oled') {
+          // 확대한 OLED 화면 (무대에서는 글씨가 작아서)
+          const cv = mk('canvas', 'oled-big', ctl); cv.width = 128; cv.height = 64;
+          cv.setAttribute('aria-label', 'OLED 화면 확대');
+          St.oledCanvas = cv; drawOledBig();
+        } else mk('span', 'muted', ctl, '코드가 제어하는 출력 장치');
       }
       const sync = () => { const n = St.nodes.find(x => x.d === d); out.textContent = n ? n.val.textContent : ''; };
       d._sync = sync; sync();
     }
   };
+  function drawOledBig() {
+    const cv = St.oledCanvas;
+    if (!cv || !cv.isConnected) return;
+    const g = cv.getContext('2d'), b = MB.oled.shown, img = g.createImageData(128, 64);
+    for (let i = 0; i < 128 * 64; i++) {
+      const on = b[i], k = i * 4;
+      img.data[k] = on ? 127 : 3; img.data[k + 1] = on ? 215 : 6; img.data[k + 2] = on ? 255 : 12; img.data[k + 3] = 255;
+    }
+    g.putImageData(img, 0, 0);
+  }
+  MB.on('oled', () => schedule2(drawOledBig));
+  let raf2 = 0;
+  function schedule2(fn) { if (raf2) return; raf2 = requestAnimationFrame(() => { raf2 = 0; fn(); }); }
+
   const syncAll = () => MB.kit.devices.forEach(d => d._sync && d._sync());
   ['pinout', 'ring', 'oled', 'kitinput', 'reset'].forEach(ev => MB.on(ev, () => setTimeout(syncAll, 20)));
 

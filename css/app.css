@@ -264,3 +264,14 @@ pre.cmd .copy { position: absolute; right: 6px; top: 5px; border: 0; border-radi
   .sim-body .stage { top: 110px; }
   .sim-body .stage-svg { max-height: 36vh; }
 }
+
+/* 무대 확대 · 이동 */
+.stage { position: relative; }
+.stage-svg { cursor: grab; }
+.stage-svg.panning { cursor: grabbing; }
+.stage-zoom { position: absolute; right: 8px; bottom: 8px; display: flex; align-items: center; gap: 2px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 2px; box-shadow: var(--shadow); z-index: 2; }
+.stage-zoom button { width: 28px; height: 26px; border: 0; background: none; cursor: pointer; font-size: 15px; border-radius: 7px; color: var(--fg); }
+.stage-zoom button:hover { background: var(--chip); }
+.stage-zoom .zl { font: 11px ui-monospace, Consolas, monospace; color: var(--muted); min-width: 38px; text-align: center; }
+/* OLED 확대 화면 */
+.oled-big { width: 100%; max-width: 384px; aspect-ratio: 2 / 1; image-rendering: pixelated; border-radius: 6px; border: 3px solid #1b3a70; background: #03060c; }

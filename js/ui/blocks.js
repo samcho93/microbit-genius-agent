@@ -37,7 +37,8 @@
   function send(req) {
     frame.contentWindow.postMessage({
       type: 'renderblocks', id: req.id, code: req.code,
-      options: { package: extsFor(req.code).map(([, n, v]) => `${n}=${v}`).join(','), snippetMode: false },
+      // layout 1 = 맨 위 블록 묶음(시작하면 · 무한반복 …)을 세로로 정렬 → 좁은 칸·교안에서 읽기 쉬움
+      options: { package: extsFor(req.code).map(([, n, v]) => `${n}=${v}`).join(','), snippetMode: false, layout: 1 },
     }, ORIGIN);
   }
 

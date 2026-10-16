@@ -23,7 +23,7 @@
 <h1>사용법</h1>
 <p><b>마이크로비트 지니어스 키트 에이전트</b>는 프롬프트(예: "날씨에 관한 예제")나 구성품 선택만으로 지니어스 키트용 micro:bit 예제를 만들고,
 구성품을 자동으로 배치·배선해 <b>MakeCode</b> 또는 <b>MicroPython</b> 코드를 바로 시뮬레이션하는 웹앱입니다. 설치할 프로그램이 없습니다.</p>
-<div class="toc"><a href="#g-screen">화면 구성</a><a href="#g-agent">에이전트(LLM) 설정</a><a href="#g-make">예제 만들기</a><a href="#g-sim">시뮬레이션</a><a href="#g-lang">MakeCode · MicroPython</a><a href="#g-real">실제 micro:bit 로</a><a href="#g-parts">구성품 · 핀</a><a href="#g-trouble">문제 해결</a><a href="#g-privacy">키 저장 · 개인정보</a></div>
+<div class="toc"><a href="#g-screen">화면 구성</a><a href="#g-lesson">강의 교안 PDF</a><a href="#g-agent">에이전트(LLM) 설정</a><a href="#g-make">예제 만들기</a><a href="#g-sim">시뮬레이션</a><a href="#g-lang">MakeCode · MicroPython</a><a href="#g-real">실제 micro:bit 로</a><a href="#g-parts">구성품 · 핀</a><a href="#g-trouble">문제 해결</a><a href="#g-privacy">키 저장 · 개인정보</a></div>
 
 <h2 id="g-screen">화면 구성</h2>
 <div class="layout-fig"><div>🤖 에이전트<br><span class="muted small">구성품 선택 · 프롬프트 · 기록</span></div><div>📝 코드<br><span class="muted small">MakeCode 블록/JS · MicroPython</span></div><div>🔌 시뮬레이션<br><span class="muted small">자동 배치 · 센서 조절 · 시리얼</span></div></div>
@@ -59,12 +59,23 @@
 <h2 id="g-sim">시뮬레이션</h2>
 <ul>
 <li><b>입력 센서</b>: 「센서 조절」 패널의 슬라이더(조도·온도·토양·가스·가변저항·거리)와 버튼(충돌·PIR·키패드)으로 값을 바꿉니다. 충돌 센서·키패드·PIR 은 무대 그림을 직접 눌러도 됩니다.</li>
+<li><b>확대 · 이동</b>: 무대 위에서 <b>마우스 휠</b>로 확대·축소, 빈 곳을 끌어 이동, 빈 곳 더블클릭(또는 오른쪽 아래 ⤢)으로 전체 보기. 터치 화면은 ＋/－ 버튼을 씁니다.</li>
+<li><b>OLED 확대 화면</b>: 무대의 OLED 와 함께 「센서 조절」 칸에도 크게 확대한 OLED 화면이 나옵니다.</li>
 <li><b>무대 고정</b>: 무대(회로 그림)는 시뮬레이션 칸 위쪽에 고정되어, 아래 센서 조절·시리얼 출력을 스크롤해도 결과가 계속 보입니다. 휴대폰에서는 실행/정지 버튼도 함께 고정됩니다.</li>
 <li><b>출력 장치</b>: LED 밝기, DC 모터 회전 속도, 서보 각도, 레인보우 링 색, OLED 화면이 코드대로 움직입니다.</li>
 <li><b>micro:bit</b>: 무대의 A·B 버튼, 로고, 0·1·2 단자를 누를 수 있고, 「micro:bit 내장 센서」에서 온도·빛·기울기·흔들기를 조절합니다. 소리(music)는 컴퓨터 스피커로 납니다.</li>
 <li><b>시리얼 출력</b>: <code>print()</code> / <code>serial.writeLine()</code> 출력과 오류 메시지가 나옵니다.</li>
 </ul>
 
+<h2 id="g-lesson">강의 교안 PDF</h2>
+<p>만든 예제로 학생에게 바로 가르칠 수 있는 <b>16:9 발표용 교안</b>을 PDF 로 만듭니다.</p>
+<ul>
+<li><b>여러 예제</b>: 「예제 만들기」가 끝나면 나오는 「📑 강의 교안 PDF 만들기 (N개 예제)」 → 그때 만든 예제 전부를 한 파일로.</li>
+<li><b>지금 예제 하나</b>: 코드 칸 위의 「📑 교안 PDF」.</li>
+<li><b>담기는 내용</b> (예제마다): 제목·구성품 → 학습 목표·생각 열기 → 준비물 → <b>회로 구성</b>(실행 중인 시뮬레이터 그림 + 단자·케이블 표) → 핵심 개념 → <b>MakeCode 블록 코드</b> → <b>MicroPython 코드</b> → 예제 설명(입력·출력) → <b>프로그램 설명</b>(단계별 코드 인용) → 실습 → 확인 문제(정답)·더 해 보기·지도 팁. 맨 앞 표지와 맨 뒤 「실제 micro:bit 로 옮기기」.</li>
+<li>교안 글은 설정한 LLM(Claude CLI 등)이 예제 코드에 맞춰 씁니다. 오프라인이거나 실패하면 코드에서 만든 기본 교안을 씁니다. 한 번 만든 교안 글은 기록에 저장되어 다음에는 더 빨리 만들어집니다.</li>
+<li>예제 하나에 약 12~15쪽, 예제당 수십 초 걸립니다 (LLM 글쓰기 + 블록 그림 + PDF).</li>
+</ul>
 <h2 id="g-lang">MakeCode · MicroPython</h2>
 <table><thead><tr><th></th><th>MakeCode</th><th>MicroPython</th></tr></thead><tbody>
 <tr><td>보기</td><td>블록 그림(공식 렌더러) + JavaScript 편집</td><td>파이썬 편집</td></tr>

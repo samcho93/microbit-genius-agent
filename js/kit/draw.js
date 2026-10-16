@@ -270,5 +270,11 @@
     document.body.prepend(s);
   }
 
-  window.KitDraw = { draw, thumb, installDefs };
+  // 그라디언트 정의까지 포함한 독립 SVG (이미지로 바꿀 때)
+  function standalone(id) {
+    const d = draw(id), pad = 6;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${(d.w + pad * 2) * 2}" height="${(d.h + pad * 2) * 2}" viewBox="${-pad} ${-pad} ${d.w + pad * 2} ${d.h + pad * 2}"><defs>${DEFS}</defs>${d.svg}</svg>`;
+  }
+
+  window.KitDraw = { draw, thumb, installDefs, standalone, DEFS };
 })();

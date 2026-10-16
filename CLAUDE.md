@@ -42,6 +42,7 @@ js/
   ui/
     blocks.js           MCBlocks: makecode.microbit.org 문서 렌더러로 블록 그림, MakeCode 편집기 가져오기
     docs.js             Docs: 사용법·튜토리얼 HTML
+    lesson.js           Lesson: 강의 교안 PDF (LLM/오프라인 교안 글 → 1280x720 HTML 슬라이드 → html2canvas → jsPDF)
   app.js                화면 전환(#workspace/#guide/#tutorial), 편집기(CodeMirror 5), 실행, 기록, 설정, 튜토리얼 동작
 py/                     시뮬레이터용 MicroPython 모듈 (microbit, music, neopixel, machine, oled …)
 device/oled.py          실제 micro:bit 용 SSD1306 드라이버 (py/oled.py 와 같은 API)
@@ -94,6 +95,14 @@ assets/icon.svg
 브리지는 저장소 루트의 웹앱도 정적 파일로 제공한다(`http://127.0.0.1:8787/`, 시작 시 브라우저 자동 열기, `--no-open`). 공개 https 사이트 → http 루프백 요청은 Chrome 로컬 네트워크 접근(LNA) 권한·Safari 혼합 콘텐츠 차단에 걸리므로, `providers.js` 의 `bridgeBase` 가 루프백에서 열린 페이지면 같은 출처(`/health`, `/generate`)를 쓴다. 그래서 `package.json` 에 `files` 제한을 두지 않는다(npx 로 웹앱 전체가 내려와야 함). `/bridge/`·숨김 파일은 제공하지 않는다.
 
 브리지 보안: 127.0.0.1 바인딩, Origin 허용 목록(`https://samcho93.github.io`, `http://localhost:*`, `--origin` 추가), 도구 비활성화, 세션 저장 안 함.
+
+## 강의 교안 (js/ui/lesson.js)
+
+- 예제마다 `buildLesson`(현재 제공자에 `Agent.complete` 로 교안 JSON 요청, 실패·오프라인이면 `offlineLesson`) → `ex.lesson` 에 저장(기록에도).
+- 회로 그림: `App.applyExample` 로 무대에 놓고 MakeCode 를 1.8초 실행한 모습을 `captureStage`(무대 SVG 복제 + `KitDraw.DEFS` + CSS 색 속성화 → PNG).
+- 블록: `MCBlocks.render`(layout 1 = 세로 정렬) → PNG → 높이가 크면 `slicePng` 로 여러 쪽.
+- html2canvas 1.4.1 · jsPDF 2.5.1 은 cdnjs 에서 필요할 때만 불러옴. 한글은 이미지로 그려지므로 글꼴 포함이 필요 없음.
+- 끝나면 원래 예제를 다시 적용. 테스트용 hooks: `onPage(canvas,i)`, `onPdf(blob,name)`(저장 대신).
 
 ## 자주 하는 작업
 

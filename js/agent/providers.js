@@ -184,5 +184,14 @@
     return ex;
   }
 
-  window.Agent = { Settings, providers: P, generate };
+  // 자유 형식 요청 (강의 교안 등): 현재 제공자로 system/user 를 보내 텍스트를 받음
+  async function complete(system, user, hooks) {
+    const s = Settings.load();
+    hooks = hooks || {};
+    const p = P[s.provider];
+    if (!p || !p.generate) throw new Error('오프라인 모드');
+    return p.generate({ system, user, onText: hooks.onText, signal: hooks.signal }, s);
+  }
+
+  window.Agent = { Settings, providers: P, generate, complete };
 })();
