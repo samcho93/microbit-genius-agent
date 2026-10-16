@@ -82,6 +82,7 @@ ${partsTable()}
 
 <h2 id="g-trouble">문제 해결</h2>
 <ul>
+<li><b>Claude CLI 에 로그인했는데 「브리지 꺼짐」으로 나옴</b> — 정상입니다. 브라우저는 보안상 내 컴퓨터의 <code>claude</code> 를 직접 실행할 수 없어서, 터미널에서 <code>${BRIDGE}</code> 를 실행해 브리지를 켜 두어야 합니다. 켜면 몇 초 안에 자동으로 「연결됨」으로 바뀝니다. 터미널 창을 닫으면 다시 꺼집니다. Safari 는 https 페이지에서 로컬 주소 접근을 막으므로 Chrome·Edge·Firefox 를 쓰세요.</li>
 <li><b>"브리지에 연결할 수 없습니다"</b> — 브리지를 켠 터미널 창이 열려 있는지, 설정의 주소가 <code>http://127.0.0.1:8787</code> 인지 확인하세요. 브라우저가 "로컬 네트워크 접근" 권한을 물으면 허용합니다.</li>
 <li><b>"claude CLI 를 찾지 못했습니다"</b> — 터미널에서 <code>claude --version</code> 이 되는지 확인하고, 처음이면 <code>claude</code> 를 실행해 로그인합니다.</li>
 <li><b>블록이 안 보임</b> — 블록 그림은 makecode.microbit.org 에서 그립니다. 인터넷 연결을 확인하거나 JavaScript 탭에서 코드를 보세요.</li>

@@ -236,3 +236,13 @@ pre.cmd .copy { position: absolute; right: 6px; top: 5px; border: 0; border-radi
   .layout-fig { grid-template-columns: 1fr; }
   .board-ctl { grid-template-columns: 1fr; }
 }
+
+/* Claude CLI 브리지 안내 */
+.cli-banner { border: 1px solid #f59e0b; background: #fffbeb; color: #78350f; border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; }
+.cli-banner p { margin: 0; }
+.cli-banner code { background: rgba(0, 0, 0, .06); padding: 0 4px; border-radius: 4px; }
+.cli-banner pre.cmd code { background: none; padding: 0; }
+.cli-banner .muted { color: #92400e; }
+:root[data-theme="dark"] .cli-banner { background: #2a2108; color: #fde68a; border-color: #a16207; }
+:root[data-theme="dark"] .cli-banner .muted { color: #fcd34d; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .cli-banner { background: #2a2108; color: #fde68a; border-color: #a16207; } :root:not([data-theme="light"]) .cli-banner .muted { color: #fcd34d; } }

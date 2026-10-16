@@ -8,7 +8,7 @@
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
-<link rel="stylesheet" href="css/app.css?v=1">
+<link rel="stylesheet" href="css/app.css?v=2">
 </head>
 <body>
 <header class="topbar">
@@ -34,6 +34,14 @@
   <section class="pane agent-pane" aria-label="에이전트">
     <div class="pane-head"><h2>🤖 에이전트</h2><span class="muted small" id="agent-provider-note"></span></div>
     <div class="pane-body">
+      <div class="cli-banner" id="cli-banner" hidden>
+        <b>Claude CLI 브리지가 꺼져 있어요</b>
+        <p>Claude CLI 에 로그인되어 있어도, 웹 브라우저는 보안상 내 컴퓨터의 <code>claude</code> 를 직접 실행할 수 없습니다.
+          터미널(PowerShell·명령 프롬프트)에서 아래 명령을 실행해 두면 이 화면이 자동으로 연결됩니다.</p>
+        <pre class="cmd"><code>npx -y github:samcho93/microbit-genius-agent</code><button type="button" class="copy" data-copy="npx -y github:samcho93/microbit-genius-agent">복사</button></pre>
+        <p class="small muted">이미 실행했다면: 브라우저가 "로컬 네트워크 기기 접근"을 물을 때 <b>허용</b>하세요 (주소창 왼쪽 사이트 설정에서 바꿀 수 있음). Safari 는 지원하지 않으니 Chrome·Edge·Firefox 를 쓰세요.</p>
+        <div class="row"><button type="button" class="btn sm" id="btn-cli-retry">다시 확인</button><button type="button" class="btn sm" id="btn-cli-offline">이번엔 오프라인 예제로</button><span class="small muted" id="cli-retry-state"></span></div>
+      </div>
       <div class="block">
         <div class="block-title">구성품 선택 <span class="muted small">(여러 개 선택)</span>
           <button class="link-btn" id="btn-clear-parts">선택 해제</button>
@@ -199,25 +207,25 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
 <script src="lib/skulpt.min.js"></script>
 <script src="lib/skulpt-stdlib.js"></script>
-<script src="js/sim/font.js?v=1"></script>
-<script src="js/sim/core.js?v=1"></script>
-<script src="js/sim/board.js?v=1"></script>
-<script src="js/sim/sensors.js?v=1"></script>
-<script src="js/sim/audio.js?v=1"></script>
-<script src="js/sim/radio.js?v=1"></script>
-<script src="js/sim/datalog.js?v=1"></script>
-<script src="js/sim/fs.js?v=1"></script>
-<script src="js/sim/runtime.js?v=1"></script>
-<script src="js/kit/catalog.js?v=1"></script>
-<script src="js/kit/draw.js?v=1"></script>
-<script src="js/kit/devices.js?v=1"></script>
-<script src="js/kit/stage.js?v=1"></script>
-<script src="js/sim/makecode.js?v=1"></script>
-<script src="js/agent/templates.js?v=1"></script>
-<script src="js/agent/prompt.js?v=1"></script>
-<script src="js/agent/providers.js?v=1"></script>
-<script src="js/ui/blocks.js?v=1"></script>
-<script src="js/ui/docs.js?v=1"></script>
-<script src="js/app.js?v=1"></script>
+<script src="js/sim/font.js?v=2"></script>
+<script src="js/sim/core.js?v=2"></script>
+<script src="js/sim/board.js?v=2"></script>
+<script src="js/sim/sensors.js?v=2"></script>
+<script src="js/sim/audio.js?v=2"></script>
+<script src="js/sim/radio.js?v=2"></script>
+<script src="js/sim/datalog.js?v=2"></script>
+<script src="js/sim/fs.js?v=2"></script>
+<script src="js/sim/runtime.js?v=2"></script>
+<script src="js/kit/catalog.js?v=2"></script>
+<script src="js/kit/draw.js?v=2"></script>
+<script src="js/kit/devices.js?v=2"></script>
+<script src="js/kit/stage.js?v=2"></script>
+<script src="js/sim/makecode.js?v=2"></script>
+<script src="js/agent/templates.js?v=2"></script>
+<script src="js/agent/prompt.js?v=2"></script>
+<script src="js/agent/providers.js?v=2"></script>
+<script src="js/ui/blocks.js?v=2"></script>
+<script src="js/ui/docs.js?v=2"></script>
+<script src="js/app.js?v=2"></script>
 </body>
 </html>

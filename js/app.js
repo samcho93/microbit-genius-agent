@@ -353,19 +353,47 @@
     } catch (e) { st.textContent = '❌ 연결 안 됨 — 브리지를 실행했는지 확인하세요'; }
   };
 
+  // 상단 상태 칩 + Claude CLI 브리지 안내. 브리지가 꺼져 있으면 켜질 때까지 몇 초마다 다시 확인
+  let cliPoll = 0;
   async function updateProviderChip() {
     const s = Agent.Settings.load();
     const name = { 'claude-cli': 'Claude CLI', anthropic: 'Claude API · ' + s.anthropicModel.replace('claude-', ''), openai: 'OpenAI · ' + s.openaiModel, gemini: 'Gemini · ' + s.geminiModel, offline: '오프라인 예제' }[s.provider];
-    $('provider-name').textContent = name;
-    $('agent-provider-note').textContent = name;
     const dot = $('provider-chip').querySelector('.dot');
-    dot.className = 'dot';
+    let label = name, ok = null;
+    clearTimeout(cliPoll);
     if (s.provider === 'claude-cli') {
-      try { const h = await Agent.providers['claude-cli'].health(s); dot.classList.add(h.ok ? 'ok' : 'bad'); $('provider-chip').title = h.ok ? 'Claude CLI 브리지 연결됨: ' + h.claude : h.error; }
-      catch (_) { dot.classList.add('bad'); $('provider-chip').title = 'Claude CLI 브리지가 꺼져 있습니다 — 설정에서 실행 방법 확인 (그동안 오프라인 예제는 사용 가능)'; }
-    } else if (s.provider === 'offline') dot.classList.add('warn');
-    else dot.classList.add((s.provider === 'anthropic' ? s.anthropicKey : s.provider === 'openai' ? s.openaiKey : s.geminiKey) ? 'ok' : 'bad');
+      try {
+        const h = await Agent.providers['claude-cli'].health(s);
+        ok = !!h.ok;
+        label = ok ? 'Claude CLI · 연결됨' : 'Claude CLI · 오류';
+        $('provider-chip').title = ok ? 'Claude CLI 브리지 연결됨: ' + h.claude : h.error;
+      } catch (_) {
+        ok = false;
+        label = 'Claude CLI · 브리지 꺼짐';
+        $('provider-chip').title = 'Claude CLI 브리지가 꺼져 있습니다 — 에이전트 칸의 안내를 확인하세요';
+      }
+      if (!ok) cliPoll = setTimeout(updateProviderChip, document.hidden ? 15000 : 4000);
+    } else if (s.provider === 'offline') ok = 'warn';
+    else ok = !!(s.provider === 'anthropic' ? s.anthropicKey : s.provider === 'openai' ? s.openaiKey : s.geminiKey);
+    if (ok === false && s.provider !== 'claude-cli') label = name + ' · 키 없음';
+    dot.className = 'dot ' + (ok === 'warn' ? 'warn' : ok ? 'ok' : 'bad');
+    $('provider-name').textContent = label;
+    $('agent-provider-note').textContent = label;
+    const wasHidden = $('cli-banner').hidden;
+    $('cli-banner').hidden = !(s.provider === 'claude-cli' && !ok);
+    if (!wasHidden && $('cli-banner').hidden && ok) toast('Claude CLI 브리지에 연결되었습니다');
   }
+  $('cli-banner').querySelectorAll('[data-copy]').forEach(b => b.onclick = async () => toast((await copy(b.dataset.copy)) ? '명령을 복사했습니다. 터미널에 붙여 넣고 Enter' : '복사하지 못했습니다'));
+  $('btn-cli-retry').onclick = async () => {
+    $('cli-retry-state').textContent = '확인 중…';
+    await updateProviderChip();
+    $('cli-retry-state').textContent = $('cli-banner').hidden ? '' : '아직 연결되지 않았습니다';
+  };
+  $('btn-cli-offline').onclick = () => {
+    const st = Agent.Settings.load(); st.provider = 'offline'; Agent.Settings.save(st);
+    updateProviderChip(); toast('오프라인 예제로 바꿨습니다. 설정에서 언제든 Claude CLI 로 되돌릴 수 있어요');
+  };
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && Agent.Settings.load().provider === 'claude-cli') updateProviderChip(); });
 
   // ---------- 튜토리얼 동작 ----------
   function setSensor(type, v) {
