@@ -89,6 +89,8 @@ assets/icon.svg
 | `gemini` | `generateContent` + `x-goog-api-key` 헤더 | 모델명 자유 입력 |
 | `offline` | `KitTemplates.generate` | 키·네트워크 없이 |
 
+브리지는 저장소 루트의 웹앱도 정적 파일로 제공한다(`http://127.0.0.1:8787/`, 시작 시 브라우저 자동 열기, `--no-open`). 공개 https 사이트 → http 루프백 요청은 Chrome 로컬 네트워크 접근(LNA) 권한·Safari 혼합 콘텐츠 차단에 걸리므로, `providers.js` 의 `bridgeBase` 가 루프백에서 열린 페이지면 같은 출처(`/health`, `/generate`)를 쓴다. 그래서 `package.json` 에 `files` 제한을 두지 않는다(npx 로 웹앱 전체가 내려와야 함). `/bridge/`·숨김 파일은 제공하지 않는다.
+
 브리지 보안: 127.0.0.1 바인딩, Origin 허용 목록(`https://samcho93.github.io`, `http://localhost:*`, `--origin` 추가), 도구 비활성화, 세션 저장 안 함.
 
 ## 자주 하는 작업

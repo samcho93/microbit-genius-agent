@@ -28,17 +28,28 @@
   const P = {};
 
   // ---------- Claude CLI (로컬 브리지: bridge/claude-bridge.mjs) ----------
+  // 브리지가 웹앱도 함께 열어 주므로, 그 주소(127.0.0.1:8787)에서 열었으면 같은 출처로 바로 연결
+  // (https 공개 사이트 → http 로컬 주소 요청은 브라우저가 막거나 권한을 물음)
+  const LOOPBACK = /^(127\.0\.0\.1|localhost|\[::1\])$/.test(location.hostname);
+  let sameOrigin = null; // null: 아직 모름
+  async function bridgeBase(s) {
+    if (LOOPBACK && sameOrigin === null) {
+      try { const r = await fetch('/health', { cache: 'no-store' }); sameOrigin = r.ok && !!(await r.json()).bridge; } catch (_) { sameOrigin = false; }
+    }
+    return sameOrigin ? location.origin : s.bridgeUrl.replace(/\/$/, '');
+  }
   P['claude-cli'] = {
     label: 'Claude CLI (내 컴퓨터의 Claude 로그인)',
+    isLocalPage: () => LOOPBACK,
     async health(s) {
-      const r = await fetch(s.bridgeUrl.replace(/\/$/, '') + '/health', { method: 'GET' });
+      const r = await fetch((await bridgeBase(s)) + '/health', { method: 'GET', cache: 'no-store' });
       if (!r.ok) throw new Error('브리지 응답 ' + r.status);
       return r.json();
     },
     async generate({ system, user, onText, signal }, s) {
       let r;
       try {
-        r = await fetch(s.bridgeUrl.replace(/\/$/, '') + '/generate', {
+        r = await fetch((await bridgeBase(s)) + '/generate', {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, signal,
           body: JSON.stringify({ system, prompt: user, model: s.cliModel || undefined }),
         });

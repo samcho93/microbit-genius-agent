@@ -379,6 +379,8 @@
     dot.className = 'dot ' + (ok === 'warn' ? 'warn' : ok ? 'ok' : 'bad');
     $('provider-name').textContent = label;
     $('agent-provider-note').textContent = label;
+    const local = Agent.providers['claude-cli'].isLocalPage();
+    $('cli-banner').querySelectorAll('[data-remote-only]').forEach(e => { e.hidden = local; });
     const wasHidden = $('cli-banner').hidden;
     $('cli-banner').hidden = !(s.provider === 'claude-cli' && !ok);
     if (!wasHidden && $('cli-banner').hidden && ok) toast('Claude CLI 브리지에 연결되었습니다');

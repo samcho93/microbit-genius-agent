@@ -1,14 +1,11 @@
 {
   "name": "microbit-genius-agent",
   "version": "1.0.0",
-  "description": "마이크로비트 지니어스 키트 예제 생성 에이전트 — Claude CLI 로컬 브리지 (웹앱은 GitHub Pages 에서 설치 없이 사용)",
+  "description": "마이크로비트 지니어스 키트 예제 생성 에이전트 — npx 로 실행하면 Claude CLI 브리지와 웹앱을 http://127.0.0.1:8787 에서 함께 엶 (배포판: GitHub Pages)",
   "type": "module",
   "bin": {
     "microbit-genius-agent": "bridge/claude-bridge.mjs"
   },
-  "files": [
-    "bridge/"
-  ],
   "scripts": {
     "bridge": "node bridge/claude-bridge.mjs",
     "serve": "python -m http.server 8790"

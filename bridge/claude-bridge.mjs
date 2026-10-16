@@ -2,7 +2,10 @@
 // Claude CLI 브리지 — 배포된 웹앱(브라우저)이 내 컴퓨터의 Claude Code CLI 로그인으로 예제를 만들 수 있게 해 줌
 //
 // 실행:  npx -y github:samcho93/microbit-genius-agent          (설치 없이 바로)
-//        node bridge/claude-bridge.mjs [--port 8787] [--origin https://example.com]
+//        node bridge/claude-bridge.mjs [--port 8787] [--origin https://example.com] [--no-open]
+//
+// 웹앱도 같은 주소(http://127.0.0.1:8787/)에서 함께 열어 줌 → 브라우저의 "공개 사이트 → 로컬 주소" 차단
+// (Chrome 로컬 네트워크 접근 제한, Safari 혼합 콘텐츠 차단)을 피할 수 있음. 시작하면 브라우저를 자동으로 엶.
 //
 // - 127.0.0.1 에서만 열림 (다른 컴퓨터에서 접근 불가)
 // - 허용한 웹 주소(Origin)에서 온 요청만 처리
@@ -10,9 +13,28 @@
 // - 의존 패키지 없음 (Node.js 18+ 내장 모듈만 사용)
 import http from 'node:http';
 import { spawn } from 'node:child_process';
-import { writeFileSync, unlinkSync, mkdtempSync } from 'node:fs';
+import { writeFileSync, unlinkSync, mkdtempSync, readFileSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve, dirname, extname, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');   // 웹앱 파일이 있는 저장소 루트
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp',
+  '.py': 'text/plain; charset=utf-8', '.md': 'text/plain; charset=utf-8', '.txt': 'text/plain; charset=utf-8' };
+
+// 정적 파일 (웹앱). 저장소 밖 경로와 bridge·숨김 파일은 막음
+function serveStatic(req, res) {
+  let path = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+  if (path.endsWith('/')) path += 'index.html';
+  const file = resolve(ROOT, '.' + path);
+  if (!file.startsWith(ROOT + sep) || /[\/]\./.test(path) || path.startsWith('/bridge/') || path.startsWith('/node_modules/')) { res.writeHead(404); res.end('not found'); return; }
+  try {
+    if (!statSync(file).isFile()) throw new Error('dir');
+    res.writeHead(200, { 'Content-Type': TYPES[extname(file).toLowerCase()] || 'application/octet-stream', 'Cache-Control': 'no-cache' });
+    res.end(readFileSync(file));
+  } catch (_) { res.writeHead(404); res.end('not found'); }
+}
 
 const args = process.argv.slice(2);
 const opt = (name, def) => { const i = args.indexOf('--' + name); return i >= 0 && args[i + 1] ? args[i + 1] : def; };
@@ -127,6 +149,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (req.method === 'GET') { serveStatic(req, res); return; }
   res.writeHead(404); res.end('not found');
 });
 
@@ -137,5 +160,17 @@ server.listen(PORT, '127.0.0.1', async () => {
   try { console.log(`  Claude CLI: ${await claudeVersion()}`); } catch (e) {
     console.log('  ⚠ claude CLI 를 찾지 못했습니다. https://claude.com/claude-code 에서 설치하고 "claude" 로 로그인하세요.');
   }
-  console.log('  웹앱의 설정에서 "Claude CLI" 를 고르면 이 브리지를 사용합니다. 끝내려면 Ctrl+C');
+  const url = `http://127.0.0.1:${PORT}/`;
+  console.log('');
+  console.log(`  ▶ 웹앱 열기: ${url}   ← 이 주소에서 쓰면 브라우저 권한 문제 없이 바로 연결됩니다`);
+  console.log('  이 창을 닫거나 Ctrl+C 를 누르면 브리지가 꺼집니다.');
+  if (!args.includes('--no-open')) {
+    const opener = isWin ? `start "" "${url}"` : process.platform === 'darwin' ? `open "${url}"` : `xdg-open "${url}"`;
+    try { spawn(opener, { shell: true, stdio: 'ignore', detached: true }).unref(); } catch (_) {}
+  }
+});
+server.on('error', e => {
+  if (e.code === 'EADDRINUSE') console.log(`포트 ${PORT} 를 이미 쓰고 있습니다. 브리지가 이미 켜져 있다면 http://127.0.0.1:${PORT}/ 를 여세요. 다른 포트: --port 8788`);
+  else console.log('오류: ' + e.message);
+  process.exit(1);
 });

@@ -36,12 +36,13 @@
 <h2 id="g-agent">에이전트(LLM) 설정</h2>
 <p>오른쪽 위 <b>⚙ 설정</b>에서 예제를 만들 LLM 을 고릅니다. 기본은 <b>Claude CLI</b> 입니다.</p>
 <table><thead><tr><th>방식</th><th>준비</th><th>특징</th></tr></thead><tbody>
-<tr><td><b>Claude CLI</b> (기본)</td><td>① <a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a> 설치 후 터미널에서 <code>claude</code> 로 로그인<br>② 터미널에서 브리지 실행:<pre><code>${BRIDGE}</code></pre>③ 설정에서 「연결 확인」</td><td>내 Claude 구독 로그인을 그대로 사용. 브리지는 <code>127.0.0.1</code> 에서만 열리고 이 웹앱 주소에서 온 요청만 받으며, Claude 를 <b>도구 없이</b> 실행합니다 (파일·명령 접근 없음). Node.js 18 이상 필요.</td></tr>
+<tr><td><b>Claude CLI</b> (기본)</td><td>① <a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a> 설치 후 터미널에서 <code>claude</code> 로 로그인<br>② 터미널에서 브리지 실행:<pre><code>${BRIDGE}</code></pre>③ 자동으로 열리는 <b>http://127.0.0.1:8787</b> 에서 사용 (브리지가 이 앱도 함께 열어 줌)</td><td>내 Claude 구독 로그인을 그대로 사용. 브리지는 <code>127.0.0.1</code> 에서만 열리고 이 웹앱 주소에서 온 요청만 받으며, Claude 를 <b>도구 없이</b> 실행합니다 (파일·명령 접근 없음). Node.js 18 이상 필요.</td></tr>
 <tr><td><b>Anthropic API 키</b></td><td><a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">콘솔</a>에서 키 발급 → 설정에 붙여넣기</td><td>브라우저에서 Claude API 로 직접 요청 (공식 SDK). 기본 모델 Claude Opus 5.5, Sonnet 5.5 · Haiku 5.5 선택 가능.</td></tr>
 <tr><td><b>OpenAI API 키</b></td><td>키와 모델 이름 입력</td><td>Chat Completions (JSON 응답 모드)</td></tr>
 <tr><td><b>Google Gemini API 키</b></td><td>키와 모델 이름 입력</td><td>generateContent (JSON 응답 모드)</td></tr>
 <tr><td><b>오프라인</b></td><td>없음</td><td>내장 레시피 18가지 + 구성품 조합 생성기. 인터넷·키 없이 수업할 때 사용.</td></tr>
 </tbody></table>
+<p class="note"><b>왜 로컬 주소에서 쓰나요?</b> 공개 사이트(https://…github.io)에서 내 컴퓨터 주소(http://127.0.0.1)로 요청하는 것을 브라우저가 막거나 권한을 묻습니다 (Chrome 「로컬 네트워크 접근」, Safari 는 항상 차단). 브리지가 연 주소에서 쓰면 같은 출처라 이런 제한이 없습니다. 공개 사이트에서도 Chrome 이 권한을 물을 때 허용하면 연결됩니다. (설정·기록은 주소마다 따로 저장됩니다.)</p>
 <p class="note">브리지 포트를 바꾸려면 <code>${BRIDGE} --port 9000</code> 처럼 실행하고 설정의 브리지 주소도 바꿉니다. 직접 배포한 다른 주소에서 쓰려면 <code>--origin https://내주소</code> 를 붙입니다.</p>
 
 <h2 id="g-make">예제 만들기</h2>
@@ -82,7 +83,7 @@ ${partsTable()}
 
 <h2 id="g-trouble">문제 해결</h2>
 <ul>
-<li><b>Claude CLI 에 로그인했는데 「브리지 꺼짐」으로 나옴</b> — 정상입니다. 브라우저는 보안상 내 컴퓨터의 <code>claude</code> 를 직접 실행할 수 없어서, 터미널에서 <code>${BRIDGE}</code> 를 실행해 브리지를 켜 두어야 합니다. 켜면 몇 초 안에 자동으로 「연결됨」으로 바뀝니다. 터미널 창을 닫으면 다시 꺼집니다. Safari 는 https 페이지에서 로컬 주소 접근을 막으므로 Chrome·Edge·Firefox 를 쓰세요.</li>
+<li><b>Claude CLI 에 로그인했는데 「브리지 꺼짐」으로 나옴</b> — 정상입니다. 브라우저는 보안상 내 컴퓨터의 <code>claude</code> 를 직접 실행할 수 없어서, 터미널에서 <code>${BRIDGE}</code> 를 실행해 브리지를 켜고, 자동으로 열리는 <b>http://127.0.0.1:8787</b> 에서 쓰세요. 켜면 몇 초 안에 「연결됨」으로 바뀝니다. 터미널 창을 닫으면 다시 꺼집니다. Safari 는 https 페이지에서 로컬 주소 접근을 막으므로 Chrome·Edge·Firefox 를 쓰세요.</li>
 <li><b>"브리지에 연결할 수 없습니다"</b> — 브리지를 켠 터미널 창이 열려 있는지, 설정의 주소가 <code>http://127.0.0.1:8787</code> 인지 확인하세요. 브라우저가 "로컬 네트워크 접근" 권한을 물으면 허용합니다.</li>
 <li><b>"claude CLI 를 찾지 못했습니다"</b> — 터미널에서 <code>claude --version</code> 이 되는지 확인하고, 처음이면 <code>claude</code> 를 실행해 로그인합니다.</li>
 <li><b>블록이 안 보임</b> — 블록 그림은 makecode.microbit.org 에서 그립니다. 인터넷 연결을 확인하거나 JavaScript 탭에서 코드를 보세요.</li>
@@ -125,7 +126,7 @@ ${partsTable()}
 <div class="do"><button class="btn sm primary" data-tut="weather">"날씨에 관한 예제" 만들기</button></div></li>
 
 <li><h3>LLM 에이전트 연결하기</h3>
-<p>⚙ 설정에서 <b>Claude CLI</b>(기본) 또는 API 키를 설정하면 내장 예제에 없는 어떤 주제든 새로 만들어 줍니다. Claude CLI 는 터미널에서 다음을 실행해 둡니다.</p>
+<p>⚙ 설정에서 <b>Claude CLI</b>(기본) 또는 API 키를 설정하면 내장 예제에 없는 어떤 주제든 새로 만들어 줍니다. Claude CLI 는 터미널에서 다음을 실행하면 브리지가 켜지고 <b>http://127.0.0.1:8787</b> 에서 앱이 열립니다.</p>
 <pre><code>${BRIDGE}</code></pre>
 <div class="do"><button class="btn sm" data-tut="settings">설정 열기</button></div></li>
 
