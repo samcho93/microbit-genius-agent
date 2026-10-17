@@ -275,3 +275,10 @@ pre.cmd .copy { position: absolute; right: 6px; top: 5px; border: 0; border-radi
 .stage-zoom .zl { font: 11px ui-monospace, Consolas, monospace; color: var(--muted); min-width: 38px; text-align: center; }
 /* OLED 확대 화면 */
 .oled-big { width: 100%; max-width: 384px; aspect-ratio: 2 / 1; image-rendering: pixelated; border-radius: 6px; border: 3px solid #1b3a70; background: #03060c; }
+
+/* 모델 선택 */
+.pv .model-row { display: flex; align-items: flex-end; gap: 8px; }
+.pv .model-row label { flex: 1; }
+.pv .model-row .btn { margin-bottom: 1px; }
+.pv .model-state { margin: 0; min-height: 1em; }
+.pv .model-state.warn { color: #b45309; }

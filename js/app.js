@@ -382,14 +382,62 @@
 
   // ---------- 설정 ----------
   const dlg = $('settings'), form = $('settings-form');
+  // ---------- 모델 드롭다운 ----------
+  const MODEL_FIELD = { 'claude-cli': 'cliModel', anthropic: 'anthropicModel', openai: 'openaiModel', gemini: 'geminiModel' };
+  const KEY_FIELD = { anthropic: 'anthropicKey', openai: 'openaiKey', gemini: 'geminiKey' };
+  const modelSelect = pv => form.querySelector(`[data-models="${pv}"]`);
+  function populateModels(pv, want) {
+    const sel = modelSelect(pv);
+    if (!sel) return;
+    const cur = Models.current(pv);
+    const state = form.querySelector(`[data-model-state="${pv}"]`);
+    let list = cur.list.slice();
+    let note = cur.live ? `이 키로 쓸 수 있는 모델 ${list.length}개 (${new Date(cur.at).toLocaleDateString('ko-KR')} 확인)` : (KEY_FIELD[pv] ? '기본 목록입니다. 키를 넣고 「목록 새로 고침」을 누르면 지금 쓸 수 있는 모델로 바뀝니다.' : '');
+    let warn = false;
+    if (want && !list.some(m => m.id === want)) {
+      if (cur.live) {
+        const rec = Models.recommended(pv, list);
+        note = `저장된 모델 "${want}" 은(는) 지금 쓸 수 없어 "${rec}" 로 바꿨습니다. 저장을 누르면 적용됩니다.`;
+        warn = true; want = rec;
+      } else list.unshift({ id: want, label: want + ' (저장된 값)' });
+    }
+    if (!want && pv !== 'claude-cli') want = Models.recommended(pv, list);
+    sel.innerHTML = list.map(m => `<option value="${esc(m.id)}">${esc(m.label)}${m.id === Models.recommended(pv, list) && pv !== 'claude-cli' ? ' ★추천' : ''}</option>`).join('') + '<option value="__custom">직접 입력…</option>';
+    sel.value = want === undefined ? '' : want;
+    if (state) { state.textContent = note; state.classList.toggle('warn', warn); }
+    toggleCustom(pv);
+  }
+  function toggleCustom(pv) {
+    const wrap = form.querySelector(`[data-custom-wrap="${pv}"]`);
+    if (wrap) wrap.hidden = modelSelect(pv).value !== '__custom';
+  }
+  async function refreshModels(pv, quiet) {
+    const state = form.querySelector(`[data-model-state="${pv}"]`);
+    const key = form.elements[KEY_FIELD[pv]] && form.elements[KEY_FIELD[pv]].value.trim();
+    if (!key) { if (!quiet && state) state.textContent = 'API 키를 먼저 입력하세요.'; return; }
+    if (state) { state.textContent = '모델 목록을 불러오는 중…'; state.classList.remove('warn'); }
+    const want = modelSelect(pv).value === '__custom' ? '' : modelSelect(pv).value;
+    try { await Models.refresh(pv, key); populateModels(pv, want); }
+    catch (e) { if (state) { state.textContent = '목록을 불러오지 못했습니다: ' + e.message; state.classList.add('warn'); } }
+  }
+  form.querySelectorAll('[data-models]').forEach(sel => sel.addEventListener('change', () => toggleCustom(sel.dataset.models)));
+  form.querySelectorAll('[data-refresh]').forEach(b => b.onclick = () => refreshModels(b.dataset.refresh));
+  for (const [pv, f] of Object.entries(KEY_FIELD)) form.elements[f].addEventListener('change', () => refreshModels(pv, true));
+
   function fillSettings() {
     const s = Agent.Settings.load();
     for (const el of form.elements) {
-      if (!el.name) continue;
+      if (!el.name || el.dataset.models) continue;
       if (el.type === 'radio') el.checked = el.value === s.provider;
       else if (s[el.name] !== undefined) el.value = s[el.name];
     }
+    for (const [pv, f] of Object.entries(MODEL_FIELD)) populateModels(pv, s[f]);
     showPv(s.provider);
+    // 키가 있는데 목록이 오래됐으면(하루) 자동으로 새로 고침
+    for (const pv of Object.keys(KEY_FIELD)) {
+      const c = Models.current(pv);
+      if (s[KEY_FIELD[pv]] && (!c.live || Date.now() - c.at > 864e5)) refreshModels(pv, true);
+    }
   }
   function showPv(p) { form.querySelectorAll('.pv').forEach(d => { d.hidden = d.dataset.pv !== p; }); }
   form.addEventListener('change', e => { if (e.target.name === 'provider') showPv(e.target.value); });
@@ -397,7 +445,9 @@
     const s = Agent.Settings.load();
     for (const el of form.elements) {
       if (!el.name) continue;
-      if (el.type === 'radio') { if (el.checked) s.provider = el.value; } else s[el.name] = el.value.trim();
+      if (el.type === 'radio') { if (el.checked) s.provider = el.value; }
+      else if (el.dataset.models && el.value === '__custom') s[el.name] = (form.querySelector(`[data-custom="${el.dataset.models}"]`).value || '').trim();
+      else s[el.name] = el.value.trim();
     }
     return s;
   }
@@ -516,6 +566,15 @@
     renderGallery();
     readHashPrompt();
     route();
+    // 저장된 모델이 이미 확인한 목록에 없으면 추천 모델로 바꿈
+    {
+      const st = Agent.Settings.load(), f = MODEL_FIELD[st.provider], c = Models.current(st.provider);
+      if (f && c.live && st[f] && !c.list.some(m => m.id === st[f])) {
+        const rec = Models.recommended(st.provider, c.list);
+        toast(`"${st[f]}" 모델은 지금 쓸 수 없어 "${rec}" 로 바꿨습니다`, 5000);
+        st[f] = rec; Agent.Settings.save(st);
+      }
+    }
     updateProviderChip();
     try { await RT.loadLibs(); } catch (e) { toast('MicroPython 라이브러리를 불러오지 못했습니다: ' + e.message, 6000); }
     const saved = store.get('mgka.current', null);

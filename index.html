@@ -8,7 +8,7 @@
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
-<link rel="stylesheet" href="css/app.css?v=8">
+<link rel="stylesheet" href="css/app.css?v=9">
 </head>
 <body>
 <header class="topbar">
@@ -160,22 +160,29 @@
       <p class="small">브라우저는 CLI 를 직접 실행할 수 없어서, 내 컴퓨터에서 작은 <b>브리지</b>를 켜 두면 웹앱이 그 브리지를 통해 <code>claude</code> 를 실행합니다. 터미널에서:</p>
       <pre class="cmd"><code>npx -y github:samcho93/microbit-genius-agent</code><button type="button" class="copy" data-copy="npx -y github:samcho93/microbit-genius-agent">복사</button></pre>
       <label>브리지 주소 <input name="bridgeUrl" placeholder="http://127.0.0.1:8787"></label>
-      <label>모델 <select name="cliModel"><option value="">CLI 기본값</option><option value="opus">opus</option><option value="sonnet">sonnet</option><option value="haiku">haiku</option></select></label>
+      <label>모델 <select name="cliModel" data-models="claude-cli"></select></label>
+      <label class="custom-model" data-custom-wrap="claude-cli" hidden>모델 ID 직접 입력 <input data-custom="claude-cli" autocomplete="off"></label>
       <div class="row"><button type="button" class="btn sm" id="btn-test-bridge">연결 확인</button><span class="small" id="bridge-state"></span></div>
     </div>
     <div class="pv" data-pv="anthropic">
       <label>API 키 <input name="anthropicKey" type="password" placeholder="sk-ant-..." autocomplete="off"></label>
-      <label>모델 <select name="anthropicModel"><option value="claude-opus-5-5">Claude Opus 5.5 (기본)</option><option value="claude-sonnet-5-5">Claude Sonnet 5.5</option><option value="claude-haiku-5-5">Claude Haiku 5.5</option></select></label>
+      <div class="model-row"><label>모델 <select name="anthropicModel" data-models="anthropic"></select></label><button type="button" class="btn sm" data-refresh="anthropic">목록 새로 고침</button></div>
+      <label class="custom-model" data-custom-wrap="anthropic" hidden>모델 ID 직접 입력 <input data-custom="anthropic" autocomplete="off"></label>
+      <p class="small muted model-state" data-model-state="anthropic"></p>
       <label>생각 깊이(effort) <select name="effort"><option value="low">low (빠름)</option><option value="medium">medium (기본)</option><option value="high">high</option></select></label>
       <p class="small muted">키 발급: <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a></p>
     </div>
     <div class="pv" data-pv="openai">
       <label>API 키 <input name="openaiKey" type="password" placeholder="sk-..." autocomplete="off"></label>
-      <label>모델 이름 <input name="openaiModel" placeholder="gpt-5"></label>
+      <div class="model-row"><label>모델 <select name="openaiModel" data-models="openai"></select></label><button type="button" class="btn sm" data-refresh="openai">목록 새로 고침</button></div>
+      <label class="custom-model" data-custom-wrap="openai" hidden>모델 ID 직접 입력 <input data-custom="openai" autocomplete="off"></label>
+      <p class="small muted model-state" data-model-state="openai"></p>
     </div>
     <div class="pv" data-pv="gemini">
       <label>API 키 <input name="geminiKey" type="password" placeholder="AIza..." autocomplete="off"></label>
-      <label>모델 이름 <input name="geminiModel" placeholder="gemini-2.5-flash"></label>
+      <div class="model-row"><label>모델 <select name="geminiModel" data-models="gemini"></select></label><button type="button" class="btn sm" data-refresh="gemini">목록 새로 고침</button></div>
+      <label class="custom-model" data-custom-wrap="gemini" hidden>모델 ID 직접 입력 <input data-custom="gemini" autocomplete="off"></label>
+      <p class="small muted model-state" data-model-state="gemini"></p>
     </div>
     <div class="pv" data-pv="offline">
       <p class="small">LLM 없이 내장 레시피 18가지와 구성품 조합 생성기로 예제를 만듭니다. 프롬프트의 낱말(예: 날씨, 화분, 주차)과 선택한 구성품으로 가장 알맞은 예제를 고릅니다.</p>
@@ -209,26 +216,27 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
 <script src="lib/skulpt.min.js"></script>
 <script src="lib/skulpt-stdlib.js"></script>
-<script src="js/sim/font.js?v=8"></script>
-<script src="js/sim/core.js?v=8"></script>
-<script src="js/sim/board.js?v=8"></script>
-<script src="js/sim/sensors.js?v=8"></script>
-<script src="js/sim/audio.js?v=8"></script>
-<script src="js/sim/radio.js?v=8"></script>
-<script src="js/sim/datalog.js?v=8"></script>
-<script src="js/sim/fs.js?v=8"></script>
-<script src="js/sim/runtime.js?v=8"></script>
-<script src="js/kit/catalog.js?v=8"></script>
-<script src="js/kit/draw.js?v=8"></script>
-<script src="js/kit/devices.js?v=8"></script>
-<script src="js/kit/stage.js?v=8"></script>
-<script src="js/sim/makecode.js?v=8"></script>
-<script src="js/agent/templates.js?v=8"></script>
-<script src="js/agent/prompt.js?v=8"></script>
-<script src="js/agent/providers.js?v=8"></script>
-<script src="js/ui/blocks.js?v=8"></script>
-<script src="js/ui/docs.js?v=8"></script>
-<script src="js/ui/lesson.js?v=8"></script>
-<script src="js/app.js?v=8"></script>
+<script src="js/sim/font.js?v=9"></script>
+<script src="js/sim/core.js?v=9"></script>
+<script src="js/sim/board.js?v=9"></script>
+<script src="js/sim/sensors.js?v=9"></script>
+<script src="js/sim/audio.js?v=9"></script>
+<script src="js/sim/radio.js?v=9"></script>
+<script src="js/sim/datalog.js?v=9"></script>
+<script src="js/sim/fs.js?v=9"></script>
+<script src="js/sim/runtime.js?v=9"></script>
+<script src="js/kit/catalog.js?v=9"></script>
+<script src="js/kit/draw.js?v=9"></script>
+<script src="js/kit/devices.js?v=9"></script>
+<script src="js/kit/stage.js?v=9"></script>
+<script src="js/sim/makecode.js?v=9"></script>
+<script src="js/agent/templates.js?v=9"></script>
+<script src="js/agent/prompt.js?v=9"></script>
+<script src="js/agent/models.js?v=9"></script>
+<script src="js/agent/providers.js?v=9"></script>
+<script src="js/ui/blocks.js?v=9"></script>
+<script src="js/ui/docs.js?v=9"></script>
+<script src="js/ui/lesson.js?v=9"></script>
+<script src="js/app.js?v=9"></script>
 </body>
 </html>

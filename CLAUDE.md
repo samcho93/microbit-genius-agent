@@ -38,6 +38,7 @@ js/
   agent/
     templates.js        KitTemplates: 오프라인 레시피 18종 + 구성품 조합 생성기(compose)
     prompt.js           AgentPrompt: 시스템 프롬프트, JSON 추출, normalize/check
+    models.js           Models: 제공자별 모델 목록(사용자 키로 실시간 조회 → localStorage 캐시, 없으면 기본 목록), 추천 모델
     providers.js        Agent: Settings(localStorage), 제공자(claude-cli/anthropic/openai/gemini/offline), generate()
   ui/
     blocks.js           MCBlocks: makecode.microbit.org 문서 렌더러로 블록 그림, MakeCode 편집기 가져오기

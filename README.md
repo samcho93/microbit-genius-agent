@@ -75,9 +75,11 @@ Claude 를 **도구 없이**(`--tools ""`) 실행하므로 파일이나 명령�
 
 | 제공자 | 기본 모델 | 비고 |
 |---|---|---|
-| Anthropic | `claude-opus-5-5` (Sonnet 5.5 · Haiku 5.5 선택) | 공식 TypeScript SDK 를 브라우저에서 직접 사용, 스트리밍 |
-| OpenAI | `gpt-5` (자유 입력) | JSON 응답 모드 |
-| Google Gemini | `gemini-2.5-flash` (자유 입력) | JSON 응답 모드 |
+| Anthropic | `claude-opus-5-5` 추천 | 공식 TypeScript SDK 를 브라우저에서 직접 사용, 스트리밍 |
+| OpenAI | 목록에서 최신 GPT 추천 | JSON 응답 모드 |
+| Google Gemini | 목록에서 최신 Flash 추천 | JSON 응답 모드 |
+
+모델은 **드롭다운**에서 고릅니다. 키를 넣으면 각 회사의 모델 목록 API(Anthropic `models.list`, OpenAI `/v1/models`, Gemini `models.list`)로 그 키로 지금 쓸 수 있는 모델을 불러오고(하루마다 자동 갱신), 저장된 모델이 사라지면 추천 모델로 바꿉니다. 「직접 입력…」도 가능.
 
 **③ 오프라인** — 키 없이 내장 레시피 18종과 구성품 조합 생성기 사용.
 

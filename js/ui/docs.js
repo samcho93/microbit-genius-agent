@@ -38,10 +38,11 @@
 <table><thead><tr><th>방식</th><th>준비</th><th>특징</th></tr></thead><tbody>
 <tr><td><b>Claude CLI</b> (기본)</td><td>① <a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a> 설치 후 터미널에서 <code>claude</code> 로 로그인<br>② 터미널에서 브리지 실행:<pre><code>${BRIDGE}</code></pre>③ 자동으로 열리는 <b>http://127.0.0.1:8787</b> 에서 사용 (브리지가 이 앱도 함께 열어 줌)</td><td>내 Claude 구독 로그인을 그대로 사용. 브리지는 <code>127.0.0.1</code> 에서만 열리고 이 웹앱 주소에서 온 요청만 받으며, Claude 를 <b>도구 없이</b> 실행합니다 (파일·명령 접근 없음). Node.js 18 이상 필요.</td></tr>
 <tr><td><b>Anthropic API 키</b></td><td><a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">콘솔</a>에서 키 발급 → 설정에 붙여넣기</td><td>브라우저에서 Claude API 로 직접 요청 (공식 SDK). 기본 모델 Claude Opus 5.5, Sonnet 5.5 · Haiku 5.5 선택 가능.</td></tr>
-<tr><td><b>OpenAI API 키</b></td><td>키와 모델 이름 입력</td><td>Chat Completions (JSON 응답 모드)</td></tr>
-<tr><td><b>Google Gemini API 키</b></td><td>키와 모델 이름 입력</td><td>generateContent (JSON 응답 모드)</td></tr>
+<tr><td><b>OpenAI API 키</b></td><td>키 입력 → 모델 드롭다운에서 선택</td><td>Chat Completions (JSON 응답 모드)</td></tr>
+<tr><td><b>Google Gemini API 키</b></td><td>키 입력 → 모델 드롭다운에서 선택</td><td>generateContent (JSON 응답 모드)</td></tr>
 <tr><td><b>오프라인</b></td><td>없음</td><td>내장 레시피 18가지 + 구성품 조합 생성기. 인터넷·키 없이 수업할 때 사용.</td></tr>
 </tbody></table>
+<p class="note"><b>모델 고르기</b> — API 키를 넣으면 각 회사의 모델 목록 API 로 <b>그 키로 지금 쓸 수 있는 모델</b>을 불러와 드롭다운에 보여 줍니다 (★추천 표시, 하루마다 자동 갱신, 「목록 새로 고침」으로 즉시). 저장된 모델이 더 이상 제공되지 않으면 추천 모델로 자동으로 바뀝니다. 목록에 없는 모델은 「직접 입력…」으로 넣을 수 있습니다.</p>
 <p class="note"><b>왜 로컬 주소에서 쓰나요?</b> 공개 사이트(https://…github.io)에서 내 컴퓨터 주소(http://127.0.0.1)로 요청하는 것을 브라우저가 막거나 권한을 묻습니다 (Chrome 「로컬 네트워크 접근」, Safari 는 항상 차단). 브리지가 연 주소에서 쓰면 같은 출처라 이런 제한이 없습니다. 공개 사이트에서도 Chrome 이 권한을 물을 때 허용하면 연결됩니다. (설정·기록은 주소마다 따로 저장됩니다.)</p>
 <p class="note">브리지 포트를 바꾸려면 <code>${BRIDGE} --port 9000</code> 처럼 실행하고 설정의 브리지 주소도 바꿉니다. 직접 배포한 다른 주소에서 쓰려면 <code>--origin https://내주소</code> 를 붙입니다.</p>
 

@@ -108,6 +108,7 @@
         msg = await run(withFallback);
       } catch (e) {
         if (withFallback && e && e.status === 400 && /fallback/i.test(e.message || '')) msg = await run(false);
+        else if (e instanceof Anthropic.NotFoundError) throw new Error(`모델 "${model}" 을(를) 쓸 수 없습니다. 설정에서 「목록 새로 고침」 후 다른 모델을 고르세요.`);
         else if (e instanceof Anthropic.AuthenticationError) throw new Error('Anthropic API 키가 올바르지 않습니다.');
         else if (e instanceof Anthropic.RateLimitError) throw new Error('요청이 너무 많습니다. 잠시 후 다시 시도하세요.');
         else throw e;
@@ -133,7 +134,7 @@
         }),
       });
       const j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error('OpenAI 오류 ' + r.status + ': ' + ((j.error && j.error.message) || ''));
+      if (!r.ok) throw new Error((r.status === 404 || /model/i.test((j.error && j.error.code) || '') ? `모델 "${s.openaiModel}" 을(를) 쓸 수 없습니다. 설정에서 「목록 새로 고침」 후 다른 모델을 고르세요. ` : '') + 'OpenAI 오류 ' + r.status + ': ' + ((j.error && j.error.message) || ''));
       return j.choices[0].message.content;
     },
   };
@@ -154,7 +155,7 @@
         }),
       });
       const j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error('Gemini 오류 ' + r.status + ': ' + ((j.error && j.error.message) || ''));
+      if (!r.ok) throw new Error((r.status === 404 ? `모델 "${s.geminiModel}" 을(를) 쓸 수 없습니다. 설정에서 「목록 새로 고침」 후 다른 모델을 고르세요. ` : '') + 'Gemini 오류 ' + r.status + ': ' + ((j.error && j.error.message) || ''));
       return j.candidates[0].content.parts.map(p => p.text || '').join('');
     },
   };
